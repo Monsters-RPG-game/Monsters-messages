@@ -1,6 +1,6 @@
 import type { EModules } from './enums';
 import type { IRoosterAddData, IRoosterFactory, IRoosterGetData, IRoosterGetInData } from './types';
-import type { Document, Model } from 'mongoose';
+import type { Document, FilterQuery, Model } from 'mongoose';
 
 export default abstract class RoosterFactory<T extends Document, U extends Model<T>, Z extends EModules>
   implements IRoosterFactory<Z>
@@ -22,7 +22,7 @@ export default abstract class RoosterFactory<T extends Document, U extends Model
   }
 
   async get(_id: unknown): Promise<IRoosterGetData[Z] | null> {
-    return this.model.findOne({ _id }).lean();
+    return this.model.findOne({ _id } as FilterQuery<unknown>).lean();
   }
 
   async getAll(page: number): Promise<IRoosterGetInData[Z]> {
