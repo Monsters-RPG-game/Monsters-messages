@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "private": false,
   "scripts": {
-    "start": "cross-env NODE_ENV=production node build/src/main.js",
+    "start": "cross-env NODE_ENV=production node src/main.js",
     "start:dev": "concurrently 'npm run build:watch' 'cross-env NODE_ENV=dev TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true nodemon build/src/main.js'",
     "start:testDev": "cross-env NODE_ENV=testDev TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true nodemon build/src/main.js",
     "start:test": "cross-env NODE_ENV=test TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ts-node src/main.ts",
@@ -20,8 +20,7 @@
     "test:watch": "jest --watch --config __tests__/jest.config.ts",
     "test:e2e": "jest --runInBand --config __tests__/jest.config.e2e.ts",
     "test:unit": "jest --config __tests__/jest.config.unit.ts",
-    "test:db": "jest --config __tests__/jest.config.db.ts",
-    "prepareHooks": "husky install"
+    "test:db": "jest --config __tests__/jest.config.db.ts"
   },
   "lint-staged": {
     "*.ts": [
@@ -35,8 +34,8 @@
     "amqplib": "0.10.3",
     "chalk": "4.1.2",
     "husky": "9.0.11",
-    "mongoose": "8.2.4",
-    "node": "21.7.1",
+    "mongoose": "8.3.0",
+    "node": "21.7.2",
     "winston": "^3.8.2",
     "winston-daily-rotate-file": "^5.0.0"
   },
