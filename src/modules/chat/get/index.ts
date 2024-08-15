@@ -13,6 +13,13 @@ export default class Controller extends ControllerFactory<EModules.Chat> {
     super(new Rooster(Chat));
   }
 
+  async getUnread(data: IGetChatMessageDto, userId: string): Promise<IUnreadMessage[]> {
+    const payload = new GetChatMessageDto(data);
+    const { page } = payload;
+
+    const messages = await this.rooster.getUnread(userId, page);
+    return formUnreadMessages(messages, userId);
+  }
   async get(
     data: IGetChatMessageDto,
     userId: string,
@@ -24,13 +31,5 @@ export default class Controller extends ControllerFactory<EModules.Chat> {
     const messages = await this.rooster.getByOwner(userId, page);
     if (!messages || messages.length === 0) return {};
     return formGetMessages(messages);
-  }
-
-  async getUnread(data: IGetChatMessageDto, userId: string): Promise<IUnreadMessage[]> {
-    const payload = new GetChatMessageDto(data);
-    const { page } = payload;
-
-    const messages = await this.rooster.getUnread(userId, page);
-    return formUnreadMessages(messages, userId);
   }
 }

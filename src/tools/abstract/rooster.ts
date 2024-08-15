@@ -15,6 +15,20 @@ export default abstract class RoosterFactory<T extends Document, U extends Model
     return this._model;
   }
 
+  async getAll(page: number): Promise<IRoosterGetInData[Z]> {
+    return this.model
+      .find({})
+      .limit(100)
+      .skip((page <= 0 ? 0 : page - 1) * 100)
+      .lean();
+  }
+  async getIn(target: string, value: string[]): Promise<IRoosterGetInData[Z]> {
+    const query = {};
+    query[target] = {
+      $in: value,
+    };
+    return this.model.find(query).lean();
+  }
   async add(data: IRoosterAddData[Z]): Promise<string> {
     const newElement = new this.model(data);
     const callback = await newElement.save();
@@ -23,21 +37,5 @@ export default abstract class RoosterFactory<T extends Document, U extends Model
 
   async get(_id: unknown): Promise<IRoosterGetData[Z] | null> {
     return this.model.findOne({ _id } as FilterQuery<unknown>).lean();
-  }
-
-  async getAll(page: number): Promise<IRoosterGetInData[Z]> {
-    return this.model
-      .find({})
-      .limit(100)
-      .skip((page <= 0 ? 0 : page - 1) * 100)
-      .lean();
-  }
-
-  async getIn(target: string, value: string[]): Promise<IRoosterGetInData[Z]> {
-    const query = {};
-    query[target] = {
-      $in: value,
-    };
-    return this.model.find(query).lean();
   }
 }

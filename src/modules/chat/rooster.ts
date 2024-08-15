@@ -30,6 +30,41 @@ export default class Rooster extends RoosterFactory<IChatMessage, typeof Chat, E
       .lean();
   }
 
+  /**
+   * Get one message with selected sender and receiver. Currently used to validate if user ever had conversation.
+   * @param sender
+   * @param receiver
+   */
+  async getOne(sender: string, receiver: string): Promise<{ chatId: string } | null> {
+    return this.model
+      .findOne({
+        $or: [
+          { sender, receiver },
+          { receiver: sender, sender: receiver },
+        ],
+      })
+      .select({ chatId: true })
+      .lean();
+  }
+  async getOneByChatId(chatId: string, receiver: string): Promise<IGetOneChatMessageEntity | null> {
+    return this.model
+      .findOne({ chatId, receiver })
+      .select({
+        read: true,
+        chatId: true,
+        sender: true,
+      })
+      .lean();
+  }
+  async getUnread(owner: string, page: number): Promise<IUnreadChatMessageEntity[]> {
+    return this.model
+      .find({ $or: [{ sender: owner }, { receiver: owner }], read: false, type: EMessageTargets.Chat })
+      .select({ chatId: true, sender: true, receiver: true, createdAt: true })
+      .sort({ createdAt: 1 })
+      .limit(100)
+      .skip((page <= 0 ? 0 : page - 1) * 100)
+      .lean();
+  }
   async getWithDetails(chatId: string, page: number): Promise<IFullChatMessageEntity[]> {
     const data = (await this.model
       .aggregate([
@@ -60,42 +95,6 @@ export default class Rooster extends RoosterFactory<IChatMessage, typeof Chat, E
       .skip((page <= 0 ? 0 : page - 1) * 100)) as IFullChatMessageEntity[];
 
     return !data || data.length === 0 ? [] : data;
-  }
-
-  /**
-   * Get one message with selected sender and receiver. Currently used to validate if user ever had conversation
-   */
-  async getOne(sender: string, receiver: string): Promise<{ chatId: string } | null> {
-    return this.model
-      .findOne({
-        $or: [
-          { sender, receiver },
-          { receiver: sender, sender: receiver },
-        ],
-      })
-      .select({ chatId: true })
-      .lean();
-  }
-
-  async getOneByChatId(chatId: string, receiver: string): Promise<IGetOneChatMessageEntity | null> {
-    return this.model
-      .findOne({ chatId, receiver })
-      .select({
-        read: true,
-        chatId: true,
-        sender: true,
-      })
-      .lean();
-  }
-
-  async getUnread(owner: string, page: number): Promise<IUnreadChatMessageEntity[]> {
-    return this.model
-      .find({ $or: [{ sender: owner }, { receiver: owner }], read: false, type: EMessageTargets.Chat })
-      .select({ chatId: true, sender: true, receiver: true, createdAt: true })
-      .sort({ createdAt: 1 })
-      .limit(100)
-      .skip((page <= 0 ? 0 : page - 1) * 100)
-      .lean();
   }
 
   async update(
