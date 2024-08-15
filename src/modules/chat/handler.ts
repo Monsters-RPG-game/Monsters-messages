@@ -28,13 +28,12 @@ export default class UserHandler extends HandlerFactory<EModules.Chat> {
     return this._readController;
   }
 
-  async get(payload: unknown, user: ILocalUser): Promise<void> {
-    const data = await this.getController.get(payload as IGetChatMessageDto, user.userId);
-    return State.broker.send(user.tempId, data, enums.EMessageTypes.Send);
-  }
-
   async getUnread(payload: unknown, user: ILocalUser): Promise<void> {
     const data = await this.getController.getUnread(payload as IGetChatMessageDto, user.userId);
+    return State.broker.send(user.tempId, data, enums.EMessageTypes.Send);
+  }
+  async get(payload: unknown, user: ILocalUser): Promise<void> {
+    const data = await this.getController.get(payload as IGetChatMessageDto, user.userId);
     return State.broker.send(user.tempId, data, enums.EMessageTypes.Send);
   }
 
