@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import * as errors from '../../../src/errors';
-import { IReadMessageDto } from '../../../src/modules/messages/read/types';
-import ReadMessageDto from '../../../src/modules/messages/read/dto';
+import * as errors from '../../../src/errors/index.js';
+import { IReadMessageDto } from '../../../src/modules/messages/subModules/read/types.js';
+import ReadMessageDto from '../../../src/modules/messages/subModules/read/dto.js';
 
 describe('Message - read', () => {
   const read: IReadMessageDto = { chatId: '63e55edbe8a800060911121d', user: '63e55edbe8a800060911121d' };

@@ -65,7 +65,7 @@ export default class MessagesRepository
       .find({
         $or: [{ sender: owner }, { receiver: owner }],
         read: false,
-        type: enums.EMessageTargets.Messages,
+        type: enums.EMessageType.Message,
       })
       .select({ chatId: 1, sender: 1, receiver: 1, createdAt: 1 })
       .sort({ createdAt: 1 })

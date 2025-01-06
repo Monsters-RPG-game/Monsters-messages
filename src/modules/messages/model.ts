@@ -22,8 +22,8 @@ export const messageSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: Object.values(enums.EMessageTargets),
-      default: enums.EMessageTargets.Messages,
+      enum: Object.values(enums.EMessageType),
+      default: enums.EMessageType.Message,
     },
     chatId: {
       type: mongoose.Types.ObjectId,

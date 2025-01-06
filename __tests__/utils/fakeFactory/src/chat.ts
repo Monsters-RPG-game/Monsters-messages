@@ -1,7 +1,7 @@
 import TemplateFactory from './abstracts';
 import type { EFakeData } from '../enums';
 import type { IAbstractBody } from '../types/data';
-import { EMessageTargets } from '../../../../src/enums';
+import { EMessageType } from '../../../../src/enums';
 import Chat from '../../../../src/modules/chat/model';
 import mongoose from 'mongoose';
 import { IChatMessageEntity } from '../../../../src/modules/chat/entity';
@@ -36,7 +36,7 @@ export default class FakeChat extends TemplateFactory<EFakeData.Chat> implements
     return this;
   }
 
-  type(type?: EMessageTargets): this {
+  type(type?: EMessageType): this {
     this.state.type = type;
     return this;
   }
@@ -63,7 +63,7 @@ export default class FakeChat extends TemplateFactory<EFakeData.Chat> implements
       body: undefined,
       sender: undefined,
       receiver: undefined,
-      type: EMessageTargets.Messages,
+      type: EMessageType.Chat,
       chatId: undefined,
       createdAt: undefined,
       updatedAt: undefined,

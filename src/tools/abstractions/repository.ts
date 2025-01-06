@@ -15,6 +15,22 @@ export default abstract class RepositoryFactory<T extends Document, U extends Mo
     return this._model;
   }
 
+  async getAll(page: number): Promise<types.IRepositoryGetInData[Z][]> {
+    return this.model
+      .find({})
+      .limit(100)
+      .skip((page <= 0 ? 0 : page - 1) * 100)
+      .lean<types.IRepositoryGetInData[Z][]>();
+  }
+
+  async getIn(target: string, value: string[]): Promise<types.IRepositoryGetInData[Z][]> {
+    const query: FilterQuery<Record<string, unknown>> = {};
+    query[target] = {
+      $in: value,
+    };
+    return this.model.find(query).lean<types.IRepositoryGetInData[Z][]>();
+  }
+
   async add(data: types.IRepositoryAddData[Z]): Promise<string> {
     const newElement = new this.model(data);
     const callback = await newElement.save();

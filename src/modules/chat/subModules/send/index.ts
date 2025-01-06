@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { EMessageTargets } from '../../../../enums/connections.js';
+import { EMessageType } from '../../../../enums/db.js';
 import * as errors from '../../../../errors/index.js';
 import type SendChatMessageDto from './dto.js';
 import type { IAbstractSubController } from '../../../../types/index.js';
@@ -29,7 +29,7 @@ export default class SendChatMessageController implements IAbstractSubController
       ...data,
       body: id.toString(),
       owner: sender,
-      type: EMessageTargets.Chat,
+      type: EMessageType.Chat,
       chatId: convId,
     });
   }

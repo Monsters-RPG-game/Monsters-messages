@@ -1,19 +1,27 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from '@jest/globals';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { afterEach, beforeEach, describe, expect, it } from '@jest/globals';
 import mongoose from 'mongoose';
-import { ILocalUser, IPreparedMessagesBody } from '../../../src/types';
-import GetController from '../../../src/modules/chat/get';
-import SendController from '../../../src/modules/chat/send';
-import ReadController from '../../../src/modules/chat/read';
-import { EUserTypes } from '../../../src/enums';
-import * as errors from '../../../src/errors';
+import GetController from '../../../src/modules/chat/subModules/get/index.js';
+import SendController from '../../../src/modules/chat/subModules/send/index.js';
+import ReadController from '../../../src/modules/chat/subModules/read/index.js';
+import * as errors from '../../../src/errors/index.js';
 import fakeData from '../../utils/fakeData.json';
-import { IFullMessageEntity, IMessageEntity } from '../../../src/modules/messages/entity';
-import { IMessageDetailsEntity } from '../../../src/modules/messagesDetails/entity';
-import FakeFactory from '../../utils/fakeFactory/src';
-import { IGetChatMessageDto } from '../../../src/modules/chat/get/types';
-import { IReadChatMessageDto } from '../../../src/modules/chat/read/types';
-import { ISendChatMessageDto } from '../../../src/modules/chat/send/types';
+import { IFullMessageEntity, IMessageEntity, IPreparedMessagesBody } from '../../../src/modules/messages/entity.js';
+import { IMessageDetailsEntity } from '../../../src/modules/details/entity.js';
+import FakeFactory from '../../utils/fakeFactory/src/index.js';
+import { IGetChatMessageDto } from '../../../src/modules/chat/subModules/get/types.js';
+import { IReadChatMessageDto } from '../../../src/modules/chat/subModules/read/types.js';
+import { ISendChatMessageDto } from '../../../src/modules/chat/subModules/send/types.js';
+import { IUserBrokerInfo } from '../../../src/types/user.js';
+import ChatRepository from '../../../src/modules/chat/repository/index.js';
+import ChatModel from '../../../src/modules/chat/model.js';
+import DetailsRepository from '../../../src/modules/details/repository/index.js';
+import DetailsModel from '../../../src/modules/details/model.js';
+import { IFullError } from '../../../src/types/errors.js';
+import GetChatMessageDto from '../../../src/modules/chat/subModules/get/dto.js';
+import ReadChatMessageDto from '../../../src/modules/chat/subModules/read/dto.js';
+import SendChatMessageDto from '../../../src/modules/chat/subModules/send/dto.js';
+import GetUnreadChatMessageDto from '../../../src/modules/chat/subModules/getUnread/dto.js';
+import GetUnreadChatMessageController from '../../../src/modules/chat/subModules/getUnread/index.js';
 
 describe('Chat', () => {
   const db = new FakeFactory();
@@ -21,17 +29,13 @@ describe('Chat', () => {
   const fakeMessage2 = fakeData.chatMessages[1] as IMessageEntity;
   const fakeDetails = fakeData.details[0] as IMessageDetailsEntity;
   const fakeDetails2 = fakeData.details[1] as IMessageDetailsEntity;
-  const localUser: ILocalUser = {
+  const localUser: IUserBrokerInfo = {
     userId: fakeMessage.sender,
     tempId: 'tempId',
-    validated: true,
-    type: EUserTypes.User,
   };
-  const messageReceiver: ILocalUser = {
+  const messageReceiver: IUserBrokerInfo = {
     userId: fakeMessage.receiver,
     tempId: 'tempId',
-    validated: true,
-    type: EUserTypes.User,
   };
   const get: IGetChatMessageDto = { page: 1, target: fakeMessage.chatId };
   const getMany: IGetChatMessageDto = { page: 1 };
@@ -41,88 +45,169 @@ describe('Chat', () => {
     receiver: fakeMessage.sender,
     sender: fakeMessage.receiver,
   };
-  const getController = new GetController();
-  const sendController = new SendController();
-  const readController = new ReadController();
-
-  beforeAll(async () => {
-    const server = await MongoMemoryServer.create();
-    await mongoose.connect(server.getUri());
-  });
+  const chatRepo = new ChatRepository(ChatModel)
+  const detailsRepo = new DetailsRepository(DetailsModel)
+  const getController = new GetController(chatRepo, detailsRepo);
+  const getUnreadController = new GetUnreadChatMessageController(chatRepo, detailsRepo);
+  const sendController = new SendController(chatRepo, detailsRepo);
+  const readController = new ReadController(chatRepo, detailsRepo);
 
   afterEach(async () => {
     await db.cleanUp();
   });
 
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoose.connection.close();
-  });
-
   describe('Should throw', () => {
     describe('No data passed', () => {
-      it(`Get one - missing page`, () => {
+      it(`Get one - missing page`, async () => {
+        let target = new errors.MissingArgError('page')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(get);
-        clone.page = undefined!;
-        getController.get(clone, new mongoose.Types.ObjectId().toString()).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('page'));
-        });
+        clone.page = undefined!
+
+        try {
+          const data = new GetChatMessageDto(clone)
+          await getController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Read - missing user`, () => {
+      it(`Read - missing user`, async () => {
+        let target = new errors.MissingArgError('user')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(read);
-        clone.user = undefined!;
-        readController.read(clone).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('user'));
-        });
+        clone.user = undefined!
+
+        try {
+          const data = new ReadChatMessageDto(clone)
+          await readController.execute(data)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Read - missing id`, () => {
+      it(`Read - missing id`, async () => {
+        let target = new errors.MissingArgError('chatId')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(read);
-        clone.chatId = undefined!;
-        readController.read(clone).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('chatId'));
-        });
+        clone.chatId = undefined!
+
+        try {
+          const data = new ReadChatMessageDto(clone)
+          await readController.execute(data)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - missing body`, () => {
+      it(`Send - missing body`, async () => {
+        let target = new errors.MissingArgError('body')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
-        clone.body = undefined!;
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('body'));
-        });
+        clone.body = undefined!
+
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - missing receiver`, () => {
+      it(`Send - missing receiver`, async () => {
+        let target = new errors.MissingArgError('receiver')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
         clone.receiver = undefined!;
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('receiver'));
-        });
+
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - missing sender`, () => {
+      it(`Send - missing sender`, async () => {
+        let target = new errors.MissingArgError('sender')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
         clone.sender = undefined!;
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('sender'));
-        });
+
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Get many - missing page`, () => {
+      it(`Get many - missing page`, async () => {
+        let target = new errors.MissingArgError('page')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(getMany);
         clone.page = undefined!;
-        getController.get(clone, new mongoose.Types.ObjectId().toString()).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('page'));
-        });
+
+        try {
+          const data = new GetChatMessageDto(clone)
+          await getController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Get unread - missing page`, () => {
+      it(`Get unread - missing page`, async () => {
+        let target = new errors.MissingArgError('page')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(getMany);
         clone.page = undefined!;
-        getController.getUnread(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.MissingArgError('page'));
-        });
+
+        try {
+          const data = new GetUnreadChatMessageDto(clone)
+          await getUnreadController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
     });
 
@@ -144,85 +229,175 @@ describe('Chat', () => {
         await db.cleanUp();
       });
 
-      it(`Get one - page incorrect type`, () => {
+      it(`Get one - page incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('page should be number')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(get);
         clone.page = 'asd' as unknown as number;
 
-        getController.get(clone, new mongoose.Types.ObjectId().toString()).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('page should be number'));
-        });
+        try {
+          const data = new GetChatMessageDto(clone)
+          await getController.execute(data, new mongoose.Types.ObjectId().toString())
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Read - user incorrect type`, () => {
+      it(`Read - user incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('user should be objectId')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(read);
         clone.user = 'asd';
 
-        readController.read(clone).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('user should be objectId'));
-        });
+        try {
+          const data = new ReadChatMessageDto(clone)
+          await readController.execute(data)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Read - id incorrect type`, () => {
+      it(`Read - id incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('chatId should be objectId')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(read);
         clone.chatId = 'asd';
 
-        readController.read(clone).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('chatId should be objectId'));
-        });
+        try {
+          const data = new ReadChatMessageDto(clone)
+          await readController.execute(data)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - body too short`, () => {
+      it(`Send - body too short`, async () => {
+        let target = new errors.IncorrectArgLengthError('body', 2, 1000)
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
         clone.body = 'a';
 
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgLengthError('body', 2, 1000));
-        });
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - receiver incorrect type`, () => {
+      it(`Send - receiver incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('receiver should be objectId')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
         clone.receiver = 'abc';
 
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('receiver should be objectId'));
-        });
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - sender incorrect type`, () => {
+      it(`Send - sender incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('sender should be objectId')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(send);
         clone.sender = 'abc';
 
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('sender should be objectId'));
-        });
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Get many - page incorrect type`, () => {
+      it(`Get many - page incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('page should be number')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(getMany);
         clone.page = 'a' as unknown as number;
 
-        getController.get(clone, new mongoose.Types.ObjectId().toString()).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('page should be number'));
-        });
+        try {
+          const data = new GetChatMessageDto(clone)
+          await getController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Get unread - page incorrect type`, () => {
+      it(`Get unread - page incorrect type`, async () => {
+        let target = new errors.IncorrectArgTypeError('page should be number')
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(getMany);
         clone.page = 'abc' as unknown as number;
 
-        getController.getUnread(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.IncorrectArgTypeError('page should be number'));
-        });
+        try {
+          const data = new GetUnreadChatMessageDto(clone)
+          await getUnreadController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
 
-      it(`Send - cannot send message to yourself`, () => {
-        const clone = structuredClone(send);
-        clone.sender = localUser.userId;
+      it(`Send - cannot send message to yourself`, async () => {
+        let target = new errors.ActionNotAllowed()
+        let error: IFullError | undefined = undefined
 
-        sendController.send(clone, localUser.userId).catch((err) => {
-          expect(err).toEqual(new errors.ActionNotAllowed());
-        });
+        const clone = structuredClone(send);
+        clone.sender = localUser.userId as string;
+
+        try {
+          const data = new SendChatMessageDto(clone)
+          await sendController.execute(data, localUser.userId as string)
+        } catch (err) {
+          error = err as IFullError
+        }
+
+        expect(error!.message).toEqual(target.message)
+        expect(error!.code).toEqual(target.code)
+        expect(error!.status).toEqual(target.status)
       });
     });
   });
@@ -256,7 +431,7 @@ describe('Chat', () => {
     });
 
     it(`Get one`, async () => {
-      const data = (await getController.get(get, localUser.userId)) as IFullMessageEntity[];
+      const data = (await getController.execute(new GetChatMessageDto(get), localUser.userId as string)) as IFullMessageEntity[];
       const elm = data[0]!;
 
       expect(data.length).toEqual(2);
@@ -268,7 +443,7 @@ describe('Chat', () => {
     });
 
     it(`Get many`, async () => {
-      const data = (await getController.get(getMany, localUser.userId)) as Record<string, IPreparedMessagesBody>;
+      const data = (await getController.execute(new GetChatMessageDto(getMany), localUser.userId as string)) as Record<string, IPreparedMessagesBody>;
       const target = Object.keys(data)[0]!;
       const elm = data[target]!;
 
@@ -279,7 +454,7 @@ describe('Chat', () => {
     });
 
     it(`Get unread`, async () => {
-      const data = await getController.getUnread(getMany, messageReceiver.userId);
+      const data = await getUnreadController.execute(new GetUnreadChatMessageDto(getMany), messageReceiver.userId as string);
       const elm = data[0]!;
 
       expect(data.length).toEqual(1);
@@ -289,22 +464,22 @@ describe('Chat', () => {
     });
 
     it(`Read`, async () => {
-      const before = await getController.getUnread(getMany, messageReceiver.userId);
+      const before = await getUnreadController.execute(new GetUnreadChatMessageDto(getMany), messageReceiver.userId as string);
       expect(before.length).toEqual(1);
 
-      await readController.read(read);
+      await readController.execute(new ReadChatMessageDto(read));
 
-      const after = await getController.getUnread(getMany, messageReceiver.userId);
+      const after = await getUnreadController.execute(new GetUnreadChatMessageDto(getMany), messageReceiver.userId as string);
       expect(after.length).toEqual(0);
     });
 
     it(`Send`, async () => {
-      await sendController.send(send, fakeMessage.receiver);
+      await sendController.execute(new SendChatMessageDto(send), fakeMessage.receiver as string);
 
-      const data = await getController.get(getMany, localUser.userId);
+      const data = await getController.execute(new GetChatMessageDto(getMany), localUser.userId as string) as Record<string, IPreparedMessagesBody>;
       const key = Object.keys(data)[0]!;
 
-      expect(data[key].messages).toEqual(2);
+      expect(data[key]?.messages).toEqual(2);
     });
   });
 });

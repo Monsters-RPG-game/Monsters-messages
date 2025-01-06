@@ -1,11 +1,11 @@
 import type { ISendMessageDto } from './subModules/send/types.js';
-import type { EMessageTargets } from '../../enums/index.js';
+import type { EMessageType } from '../../enums/index.js';
 import type mongoose from 'mongoose';
 
 export interface IMessageEntity extends ISendMessageDto {
   _id: mongoose.Types.ObjectId | string;
   read: boolean;
-  type: EMessageTargets;
+  type: EMessageType;
   chatId: string;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +22,7 @@ export interface IFullMessageEntity {
 export interface IGetMessageEntity {
   sender: string;
   receiver: string;
-  type: EMessageTargets;
+  type: EMessageType;
   chatId: string;
 }
 
@@ -53,6 +53,6 @@ export interface IPreparedMessagesBody {
 }
 
 export interface IPreparedMessages {
-  type: EMessageTargets;
+  type: EMessageType;
   messages: Record<string, IPreparedMessagesBody>;
 }

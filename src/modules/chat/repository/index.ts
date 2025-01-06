@@ -62,7 +62,7 @@ export default class ChatRepository
 
   async getUnread(owner: string, page: number): Promise<IUnreadChatMessageEntity[]> {
     return this.model
-      .find({ $or: [{ sender: owner }, { receiver: owner }], read: false, type: enums.EMessageTargets.Chat })
+      .find({ $or: [{ sender: owner }, { receiver: owner }], read: false, type: enums.EMessageType.Chat })
       .select({ chatId: true, sender: true, receiver: true, createdAt: true })
       .sort({ createdAt: 1 })
       .limit(100)

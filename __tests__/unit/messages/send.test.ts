@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import * as errors from '../../../src/errors';
-import { ISendMessageDto } from '../../../src/modules/messages/send/types';
-import SendMessageDto from '../../../src/modules/messages/send/dto';
+import * as errors from '../../../src/errors/index.js';
+import { ISendMessageDto } from '../../../src/modules/messages/subModules/send/types.js';
+import SendMessageDto from '../../../src/modules/messages/subModules/send/dto.js';
 
 describe('Message - send', () => {
   const send: ISendMessageDto = {

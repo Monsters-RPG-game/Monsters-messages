@@ -1,19 +1,19 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-import Rooster from '../../src/modules/chat/rooster';
+import { afterEach, describe, expect, it } from '@jest/globals';
+import Repository from '../../src/modules/chat/repository/index.js';
 import fakeData from '../utils/fakeData.json';
-import { IGetOneMessageEntity, IMessageEntity } from '../../src/modules/messages/entity';
-import FakeFactory from '../utils/fakeFactory/src';
-import { IFullError, INewMessage } from '../../src/types';
-import { EMessageTargets } from '../../src/enums';
-import { MongoIncorrectEnumError, MongoMissingError, MongoNotObjectIdError } from '../utils/errors';
-import Chat from '../../src/modules/chat/model';
+import { IGetOneMessageEntity, IMessageEntity } from '../../src/modules/messages/entity.js';
+import FakeFactory from '../utils/fakeFactory/src/index.js';
+import { IFullError } from '../../src/types/index.js';
+import { EMessageType } from '../../src/enums/index.js';
+import { MongoIncorrectEnumError, MongoMissingError, MongoNotObjectIdError } from '../utils/errors/index.js';
+import ChatModel from '../../src/modules/chat/model.js';
+import { INewMessage } from '../../src/modules/chat/entity.js';
+import sleep from '../../src/utils/index.js';
 
 describe('Chat - add', () => {
   const db = new FakeFactory();
   const fakeMessage = fakeData.messages[0] as IMessageEntity;
-  const rooster = new Rooster(Chat);
+  const repo = new Repository(ChatModel);
   const newMessage: INewMessage = {
     owner: fakeMessage.sender,
     type: fakeMessage.type,
@@ -23,87 +23,90 @@ describe('Chat - add', () => {
     sender: fakeMessage.sender,
   };
 
-  beforeAll(async () => {
-    const server = await MongoMemoryServer.create();
-    await mongoose.connect(server.getUri());
-  });
-
   afterEach(async () => {
     await db.cleanUp();
-  });
-
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoose.connection.close();
   });
 
   describe('Should throw', () => {
     describe('Missing data', () => {
       it(`Missing receiver`, async () => {
+        const target = new MongoMissingError('Chat', 'receiver');
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(newMessage);
         clone.receiver = undefined!;
+
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoMissingError('Chat', 'receiver');
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
+
         expect(message).toEqual(null);
+        expect(error!.message).toEqual(target.message)
       });
 
       it(`Missing body`, async () => {
+        const target = new MongoMissingError('Chat', 'body');
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(newMessage);
         clone.body = undefined!;
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoMissingError('Chat', 'body');
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
+
         expect(message).toEqual(null);
+        expect(error!.message).toEqual(target.message)
       });
 
       it(`Missing sender`, async () => {
+        const target = new MongoMissingError('Chat', 'sender');
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(newMessage);
         clone.sender = undefined!;
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoMissingError('Chat', 'sender');
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
+
         expect(message).toEqual(null);
+        expect(error!.message).toEqual(target.message)
       });
 
       it(`Missing chatId`, async () => {
+        const target = new MongoMissingError('Chat', 'chatId');
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(newMessage);
         clone.chatId = undefined!;
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoMissingError('Chat', 'chatId');
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
+
         expect(message).toEqual(null);
+        expect(error!.message).toEqual(target.message)
       });
     });
 
@@ -113,7 +116,7 @@ describe('Chat - add', () => {
         clone.receiver = 'x';
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
           const error = err as IFullError;
           const target = new MongoNotObjectIdError('Chat', 'receiver', clone.receiver);
@@ -121,7 +124,7 @@ describe('Chat - add', () => {
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
         expect(message).toEqual(null);
       });
 
@@ -130,7 +133,7 @@ describe('Chat - add', () => {
         clone.sender = 'x';
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
           const error = err as IFullError;
           const target = new MongoNotObjectIdError('Chat', 'sender', clone.sender);
@@ -138,7 +141,7 @@ describe('Chat - add', () => {
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
         expect(message).toEqual(null);
       });
 
@@ -147,7 +150,7 @@ describe('Chat - add', () => {
         clone.body = 'x';
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
           const error = err as IFullError;
           const target = new MongoNotObjectIdError('Chat', 'body', clone.body);
@@ -155,16 +158,16 @@ describe('Chat - add', () => {
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
         expect(message).toEqual(null);
       });
 
       it(`Type incorrect`, async () => {
         const clone = structuredClone(newMessage);
-        clone.type = 'x' as EMessageTargets;
+        clone.type = 'x' as EMessageType;
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
           const error = err as IFullError;
           const target = new MongoIncorrectEnumError('Chat', 'type', clone.type);
@@ -172,7 +175,7 @@ describe('Chat - add', () => {
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
         expect(message).toEqual(null);
       });
 
@@ -181,7 +184,7 @@ describe('Chat - add', () => {
         clone.chatId = 'x';
 
         try {
-          await rooster.add(clone);
+          await repo.add(clone);
         } catch (err) {
           const error = err as IFullError;
           const target = new MongoNotObjectIdError('Chat', 'chatId', clone.chatId);
@@ -189,7 +192,7 @@ describe('Chat - add', () => {
         }
 
         const { chatId, receiver } = newMessage;
-        const message = await rooster.getOneByChatId(chatId, receiver);
+        const message = await repo.getOneByChatId(chatId, receiver);
         expect(message).toEqual(null);
       });
     });
@@ -197,10 +200,12 @@ describe('Chat - add', () => {
 
   describe('Should pass', () => {
     it(`Add message`, async () => {
-      await rooster.add(newMessage);
+      await repo.add(newMessage);
 
       const { chatId, receiver } = newMessage;
-      const message = (await rooster.getOneByChatId(chatId, receiver)) as IGetOneMessageEntity;
+      const message = (await repo.getOneByChatId(chatId, receiver)) as IGetOneMessageEntity;
+
+      await sleep(50) // Sleep here only exists, because jest seems to be triggering afterAll too fast
 
       expect(message).not.toEqual(null);
       expect(message.sender.toString()).toEqual(newMessage.sender);

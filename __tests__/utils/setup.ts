@@ -7,6 +7,7 @@ const connection = new Connection();
 
 beforeAll(async () => {
   await connection.connect();
+
   const broker = new FakeBroker()
   State.broker = broker
 });

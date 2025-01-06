@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { EMessageTargets } from '../../../../enums/connections.js';
+import { EMessageType } from '../../../../enums/db.js';
 import * as errors from '../../../../errors/index.js';
 import type SendMessageDto from './dto.js';
 import type { IAbstractSubController } from '../../../../types/index.js';
@@ -28,7 +28,7 @@ export default class SendMessageController implements IAbstractSubController<voi
       ...data,
       body: id.toString(),
       owner: sender,
-      type: EMessageTargets.Messages,
+      type: EMessageType.Message,
       chatId: convId,
     });
   }
