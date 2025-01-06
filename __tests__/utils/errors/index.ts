@@ -1,4 +1,4 @@
-import { FullError } from '../../../src/errors';
+import { FullError } from '../../../src/errors/index.js';
 
 export class MongoNotObjectIdError extends FullError {
   constructor(model: string, target: string, value: string) {

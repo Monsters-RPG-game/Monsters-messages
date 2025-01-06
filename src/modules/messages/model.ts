@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
-import * as enums from '../../enums';
-import { EMessageTargets } from '../../enums';
-import type * as type from '../../types';
+import * as enums from '../../enums/index.js';
+import type { IMessage } from './types.js';
 
 export const messageSchema = new mongoose.Schema(
   {
@@ -23,8 +22,8 @@ export const messageSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: Object.values(EMessageTargets),
-      default: EMessageTargets.Messages,
+      enum: Object.values(enums.EMessageType),
+      default: enums.EMessageType.Message,
     },
     chatId: {
       type: mongoose.Types.ObjectId,
@@ -34,5 +33,5 @@ export const messageSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const Message = mongoose.model<type.IMessage>('Message', messageSchema, enums.EDbCollections.Messages);
+const Message = mongoose.model<IMessage>('Message', messageSchema, enums.EDbCollections.Messages);
 export default Message;

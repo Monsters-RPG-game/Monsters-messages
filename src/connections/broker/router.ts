@@ -1,64 +1,41 @@
-import * as enums from '../../enums';
-import * as errors from '../../errors';
-import ChatController from '../../modules/chat/handler';
-import MessagesController from '../../modules/messages/handler';
-import type * as types from '../../types';
+import Log from 'simpleLogger';
+import Handler from './handler.js';
+import * as enums from '../../enums/index.js';
+import * as errors from '../../errors/index.js';
+import type * as types from '../../types/index.js';
 
 export default class Router {
-  private readonly _messages: MessagesController;
-  private readonly _chat: ChatController;
+  private readonly _handler: Handler;
 
   constructor() {
-    this._messages = new MessagesController();
-    this._chat = new ChatController();
+    this._handler = new Handler();
   }
 
-  private get messages(): MessagesController {
-    return this._messages;
-  }
-
-  private get chat(): ChatController {
-    return this._chat;
+  private get handler(): Handler {
+    return this._handler;
   }
 
   async handleMessage(payload: types.IRabbitMessage): Promise<void> {
+    this.logNewMessage(payload);
+
     switch (payload.target) {
       case enums.EMessageTargets.Messages:
-        return this.messagesMessage(payload);
+        return this.handler.messageMessage(payload);
       case enums.EMessageTargets.Chat:
-        return this.chatMessage(payload);
+        return this.handler.chatMessage(payload);
       default:
         throw new errors.IncorrectTargetError();
     }
   }
 
-  private async messagesMessage(payload: types.IRabbitMessage): Promise<void> {
-    switch (payload.subTarget) {
-      case enums.EMessagesTargets.Get:
-        return this.messages.get(payload.payload, payload.user);
-      case enums.EMessagesTargets.GetUnread:
-        return this.messages.getUnread(payload.payload, payload.user);
-      case enums.EMessagesTargets.Send:
-        return this.messages.send(payload.payload, payload.user);
-      case enums.EMessagesTargets.Read:
-        return this.messages.read(payload.payload, payload.user);
-      default:
-        throw new errors.IncorrectTargetError();
-    }
-  }
+  private logNewMessage(message: types.IRabbitMessage): void {
+    const toLog = { ...structuredClone(message) };
 
-  private async chatMessage(payload: types.IRabbitMessage): Promise<void> {
-    switch (payload.subTarget) {
-      case enums.EMessagesTargets.Get:
-        return this.chat.get(payload.payload, payload.user);
-      case enums.EMessagesTargets.GetUnread:
-        return this.chat.getUnread(payload.payload, payload.user);
-      case enums.EMessagesTargets.Send:
-        return this.chat.send(payload.payload, payload.user);
-      case enums.EMessagesTargets.Read:
-        return this.chat.read(payload.payload, payload.user);
-      default:
-        throw new errors.IncorrectTargetError();
+    if ((toLog.payload as Record<string, string>)?.password) {
+      (toLog.payload as Record<string, string>).password = '***';
     }
+
+    Log.log('Rabbit', 'Got new message');
+    Log.log('Rabbit', toLog);
   }
 }

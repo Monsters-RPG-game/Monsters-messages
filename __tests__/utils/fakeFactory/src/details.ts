@@ -1,8 +1,9 @@
-import TemplateFactory from './abstracts';
-import type { EFakeData } from '../enums';
-import Details from '../../../../src/modules/messagesDetails/model';
-import type { IAbstractBody } from '../types/data';
-import { IMessageDetailsEntity } from '../../../../src/modules/messagesDetails/entity';
+import TemplateFactory from './abstracts.js';
+import type { EFakeData } from '../enums/index.js';
+import Details from '../../../../src/modules/details/model.js';
+import type { IAbstractBody } from '../types/data.js';
+import { IMessageDetailsEntity } from '../../../../src/modules/details/entity.js';
+import mongoose from 'mongoose';
 
 export default class FakeDetails
   extends TemplateFactory<EFakeData.MessageDetails>
@@ -12,7 +13,7 @@ export default class FakeDetails
     super(Details);
   }
 
-  _id(id?: string): this {
+  _id(id?: string | mongoose.Types.ObjectId): this {
     this.state._id = id;
     return this;
   }

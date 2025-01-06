@@ -1,7 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import * as errors from '../../../src/errors';
-import { IGetMessageDto } from '../../../src/modules/messages/get/types';
-import GetMessageDto from '../../../src/modules/messages/get/dto';
+import * as errors from '../../../src/errors/index.js';
+import { IGetMessageDto } from '../../../src/modules/messages/subModules/get/types.js';
+import GetMessageDto from '../../../src/modules/messages/subModules/get/dto.js';
 
 describe('Message - get', () => {
   const get: IGetMessageDto = { page: 1 };

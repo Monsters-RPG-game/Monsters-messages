@@ -1,9 +1,9 @@
 import type { EFakeData } from '../enums';
-import type Messages from '../../../../src/modules/messages/model';
-import type Details from '../../../../src/modules/messagesDetails/model';
-import { IMessageEntity } from '../../../../src/modules/messages/entity';
-import { IMessageDetailsEntity } from '../../../../src/modules/messagesDetails/entity';
-import Chat from '../../../../src/modules/chat/model';
+import type Messages from '../../../../src/modules/messages/model.js';
+import type Details from '../../../../src/modules/details/model.js';
+import { IMessageEntity } from '../../../../src/modules/messages/entity.js';
+import { IMessageDetailsEntity } from '../../../../src/modules/details/entity.js';
+import Chat from '../../../../src/modules/chat/model.js';
 
 export type IFakeParam<T> = {
   [P in keyof T]?: T[P];
@@ -22,5 +22,5 @@ export interface IFakeModel {
 }
 
 export type IAbstractBody<T> = {
-  [P in keyof T]: ([arg]?: typeof P) => this;
+  [P in keyof T]: (arg?: T[P]) => IAbstractBody<T>;
 };

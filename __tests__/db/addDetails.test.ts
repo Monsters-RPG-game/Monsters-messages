@@ -1,71 +1,68 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from '@jest/globals';
-import { MongoMemoryServer } from 'mongodb-memory-server';
-import mongoose from 'mongoose';
-import Rooster from '../../src/modules/messagesDetails/rooster';
+import { afterEach, describe, expect, it } from '@jest/globals';
+import Repository from '../../src/modules/details/repository/index.js';
 import fakeData from '../utils/fakeData.json';
-import FakeFactory from '../utils/fakeFactory/src';
-import { IFullError } from '../../src/types';
-import { MongoIncorrectMinLengthError, MongoMissingError } from '../utils/errors';
-import { IMessageDetailsEntity } from '../../src/modules/messagesDetails/entity';
-import MessageDetails from '../../src/modules/messagesDetails/model';
+import FakeFactory from '../utils/fakeFactory/src/index.js';
+import { IFullError } from '../../src/types/index.js';
+import { MongoIncorrectMinLengthError, MongoMissingError } from '../utils/errors/index.js';
+import { IMessageDetailsEntity } from '../../src/modules/details/entity.js';
+import MessageDetailsModel from '../../src/modules/details/model.js';
+import sleep from '../../src/utils/index.js';
 
 describe('Details - add', () => {
   const db = new FakeFactory();
   const fakeDetails = fakeData.details[0] as IMessageDetailsEntity;
-  const rooster = new Rooster(MessageDetails);
-
-  beforeAll(async () => {
-    const server = await MongoMemoryServer.create();
-    await mongoose.connect(server.getUri());
-  });
+  const repo = new Repository(MessageDetailsModel);
 
   afterEach(async () => {
     await db.cleanUp();
   });
 
-  afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoose.connection.close();
-  });
-
   describe('Should throw', () => {
     describe('Missing message', () => {
       it(`Missing message`, async () => {
+        const target = new MongoMissingError('Details', 'message');
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(fakeDetails);
         clone.message = undefined!;
 
         try {
-          await rooster.add({ message: clone.message });
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoMissingError('Details', 'message');
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
+
+        expect(error!.message).toEqual(target.message)
       });
     });
 
     describe('Incorrect data', () => {
       it(`Receiver incorrect`, async () => {
+        const target = new MongoIncorrectMinLengthError('Details', 'message', 2);
+        let error: IFullError | undefined = undefined
+
         const clone = structuredClone(fakeDetails);
         clone.message = 'x';
 
         try {
-          await rooster.add({ message: clone.message });
+          await repo.add(clone);
         } catch (err) {
-          const error = err as IFullError;
-          const target = new MongoIncorrectMinLengthError('Details', 'message', 2);
-          expect(error.message).toEqual(target.message);
+          error = err as IFullError;
         }
+
+        expect(error!.message).toEqual(target.message)
       });
     });
   });
 
   describe('Should pass', () => {
     it(`Add message`, async () => {
-      await rooster.add({ message: fakeDetails.message });
+      await repo.add({ message: fakeDetails.message });
 
-      const messages = await rooster.getAll(1);
+      const messages = await repo.getAll(1);
       const message = messages[0]!;
+
+      await sleep(50) // Sleep here only exists, because jest seems to be triggering afterAll too fast
 
       expect(messages.length).toEqual(1);
       expect(message.message).toEqual(fakeDetails.message);
