@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import * as enums from '../../enums';
-import { messageSchema } from '../messages/model';
-import type * as type from '../../types';
+import * as enums from '../../enums/index.js';
+import { messageSchema } from '../messages/model.js';
+import type { IChatMessage } from '../chat/types.js';
 
-const Chat = mongoose.model<type.IMessage>('Chat', messageSchema, enums.EDbCollections.Chats);
+const Chat = mongoose.model<IChatMessage>('Chat', messageSchema, enums.EDbCollections.Chats);
 export default Chat;

@@ -1,12 +1,12 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import Log from '../..//tools/logger';
+import Log from 'simpleLogger';
 import fakeData from '../../../__tests__/utils/fakeData.json';
-import { EFakeData } from '../../../__tests__/utils/fakeFactory/enums';
-import FakeFactory from '../../../__tests__/utils/fakeFactory/src';
-import type { IFakeState } from '../../../__tests__/utils/fakeFactory/types/data';
-import type { IMessageEntity } from '../../modules/messages/entity';
-import type { IMessageDetailsEntity } from '../../modules/messagesDetails/entity';
+import { EFakeData } from '../../../__tests__/utils/fakeFactory/enums/index.js';
+import FakeFactory from '../../../__tests__/utils/fakeFactory/src/index.js';
+import type { IFakeState } from '../../../__tests__/utils/fakeFactory/types/data.js';
+import type { IMessageDetailsEntity } from '../../modules/details/entity.js';
+import type { IMessageEntity } from '../../modules/messages/entity.js';
 
 export default class Mock {
   private readonly _fakeFactory: FakeFactory | undefined = undefined;
@@ -43,10 +43,16 @@ export default class Mock {
     await Promise.all(
       params.map(async (p) => {
         for (const m of Object.getOwnPropertyNames(Object.getPrototypeOf(target))) {
-          if (m === 'constructor' || m === 'create' || m === 'fillState' || typeof target[m] !== 'function') continue;
+          if (
+            m === 'constructor' ||
+            m === 'create' ||
+            m === 'fillState' ||
+            typeof target[m as keyof typeof target] !== 'function'
+          )
+            continue;
 
-          const method = target[m] as (arg: unknown) => void;
-          method.call(target, p[m]);
+          const method = target[m as keyof typeof target] as (arg: unknown) => void;
+          method.call(target, p[m as keyof typeof p]);
         }
         await target.create();
       }),
