@@ -11,6 +11,7 @@ TLDR:
 2. [How to build](#2-how-to-build)
 3. [Useful information](#3-useful-information)
 4. [Docs](#4-docs)
+5. [Docs](#5-issues)
 
 ## 0. Key packages
 
@@ -20,13 +21,20 @@ TLDR:
 
 ## 1. How to start
 
-### Install dependencies
+- Install dependencies
 
 ```bash
 npm install / yarn
 ```
 
-### Prepare environment
+- start 
+
+```bash
+npm run start:dev / yarn start:dev
+```
+
+Above scripts will let you start this application. You can find more detailed guide in `/docs/HowToStart.md`
+
 
 ## 2. How to build
 
@@ -178,3 +186,30 @@ This application is ready for probing in k8s / other systems. You can find liven
 ### 4.4 Connections and access
 
 When I write my apps, I prefer to have some kind of global state, which allows my app to have access to every external connection from any point in code. You can find this "state" in `/src/tools/state`. This state is used to keep external connections and to manage them. For example, instead of dependency injecting each connection to each route, I prefer to just access them from that global state 
+
+## 5. Issues 
+
+> [!TIP]
+> This category will try to explain basic issues, that you might encounter with this app. This will not include every possible issues, that was created on github, rather basic problems, that you might not expect
+
+- `Start:dev` throws `Cannot find module`
+
+There are 3 reason, why this might happen.
+
+> [!NOTE]
+> You started this app for the first time
+
+1. Due to limitations with libraries, this command will throw an error, if you run it first time. Simply return it again.
+
+> [!NOTE]
+> You've been working on this app for a while
+
+2. Something got cached in the background, after you've been working on this app for a while. This can happen, but it rare. There is a note related to it in tip under point #2. All you need to do is to remove cache. If your terminal supports make ( linux, macos, windows bash terminal and others ), simply run:
+
+```bash
+make clean
+```
+
+If you are unable to run make command, remove build folder
+
+3. There is an error with imported code. Because this app is written in ESM, it might crash if imported ts file does not have `file.js` ( .js ) extension. This is a limitation of ESM and you might not get any errors. There should be error related to it in log files, because logger catches most of issues. If you won't find any related info in logs folder ( explained in #3.1 ) and you won't be able to fix it, please create an issue for it on github.
