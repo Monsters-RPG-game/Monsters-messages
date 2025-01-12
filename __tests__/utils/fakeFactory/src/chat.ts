@@ -1,10 +1,10 @@
-import TemplateFactory from './abstracts';
-import type { EFakeData } from '../enums';
-import type { IAbstractBody } from '../types/data';
-import { EMessageType } from '../../../../src/enums';
-import Chat from '../../../../src/modules/chat/model';
+import TemplateFactory from './abstracts.js';
+import type { EFakeData } from '../enums/index.js';
+import type { IAbstractBody } from '../types/data.js';
+import { EMessageType } from '../../../../src/enums/index.js';
+import Chat from '../../../../src/modules/chat/model.js';
 import mongoose from 'mongoose';
-import { IChatMessageEntity } from '../../../../src/modules/chat/entity';
+import { IChatMessageEntity } from '../../../../src/modules/chat/entity.js';
 
 export default class FakeChat extends TemplateFactory<EFakeData.Chat> implements IAbstractBody<IChatMessageEntity> {
   constructor() {

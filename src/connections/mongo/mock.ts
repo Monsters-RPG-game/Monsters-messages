@@ -1,7 +1,7 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import Log from 'simpleLogger';
-import fakeData from '../../../__tests__/utils/fakeData.json';
+import fakeData from '../../../__tests__/utils/fakeData.json' with { type: 'json' };
 import { EFakeData } from '../../../__tests__/utils/fakeFactory/enums/index.js';
 import FakeFactory from '../../../__tests__/utils/fakeFactory/src/index.js';
 import type { IFakeState } from '../../../__tests__/utils/fakeFactory/types/data.js';

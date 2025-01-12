@@ -1,5 +1,5 @@
-import type { EFakeData } from '../enums';
-import type { IFakeModel, IFakeState } from '../types/data';
+import type { EFakeData } from '../enums/index.js';
+import type { IFakeModel, IFakeState } from '../types/data.js';
 import type mongoose from 'mongoose';
 
 export default abstract class TemplateFactory<T extends EFakeData> {

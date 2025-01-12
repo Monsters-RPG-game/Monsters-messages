@@ -1,5 +1,5 @@
 import Validation from '../../../../tools/validation.js';
-import type { ISendChatMessageDto } from './types';
+import type { ISendChatMessageDto } from './types.js';
 
 export default class SendChatMessageDto implements ISendChatMessageDto {
   body: string;

@@ -1,9 +1,9 @@
-import TemplateFactory from './abstracts';
-import type { EFakeData } from '../enums';
-import Message from '../../../../src/modules/messages/model';
-import type { IAbstractBody } from '../types/data';
-import { IMessageEntity } from '../../../../src/modules/messages/entity';
-import { EMessageType } from '../../../../src/enums';
+import TemplateFactory from './abstracts.js';
+import type { EFakeData } from '../enums/index.js';
+import Message from '../../../../src/modules/messages/model.js';
+import type { IAbstractBody } from '../types/data.js';
+import { IMessageEntity } from '../../../../src/modules/messages/entity.js';
+import { EMessageType } from '../../../../src/enums/index.js';
 import mongoose from 'mongoose';
 
 export default class FakeMessage extends TemplateFactory<EFakeData.Messages> implements IAbstractBody<IMessageEntity> {
