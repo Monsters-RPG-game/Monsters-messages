@@ -1,6 +1,6 @@
-import FakeDetails from './details';
-import FakeMessage from './message';
-import FakeChat from './chat';
+import FakeDetails from './details.js';
+import FakeMessage from './message.js';
+import FakeChat from './chat.js';
 
 export default class FakeFactory {
   private readonly _message: FakeMessage;

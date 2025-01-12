@@ -1,6 +1,6 @@
 {
   "name": "messages",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Part of microservice application, which manages messaging system",
   "productName": "Messages",
   "author": "https://github.com/Virus288",
@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node build/src/main.js",
     "start:dev": "concurrently 'npm run build:watch' 'cross-env NODE_ENV=development nodemon build/src/main.js'",
-    "start:testDev": "cross-env NODE_ENV=testDev node src/main.js",
+    "start:testDev": "cross-env NODE_ENV=testDev node build/src/main.js",
     "build": "tsc -p tsconfig.json",
     "build:watch": "tsc -w -p tsconfig.json",
     "lint": "cross-env NODE_ENV=development eslint -c eslint.config.mjs . --fix",

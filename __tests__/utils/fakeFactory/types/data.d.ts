@@ -1,4 +1,4 @@
-import type { EFakeData } from '../enums';
+import type { EFakeData } from '../enums/index.js';
 import type Messages from '../../../../src/modules/messages/model.js';
 import type Details from '../../../../src/modules/details/model.js';
 import { IMessageEntity } from '../../../../src/modules/messages/entity.js';
