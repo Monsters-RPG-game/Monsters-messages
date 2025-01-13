@@ -1,4 +1,4 @@
-import Log from 'simpleLogger';
+import Log from 'simpl-loggar';
 import * as enums from '../enums/index.js';
 import ChatController from '../modules/chat/controller.js';
 import MessageDetailsController from '../modules/details/controller.js';
